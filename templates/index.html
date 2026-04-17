@@ -1,1 +1,66 @@
+{% extends "base.html" %}
 
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<section class="hero text-center py-5">
+    <div class="container">
+        <h1 class="display-4 fw-bold">Transforme seu negócio com tecnologia e IA</h1>
+        <p class="lead">Automação, sistemas web e inteligência artificial sob medida</p>
+        <a href="#contact" class="btn btn-primary btn-lg">Fale Conosco</a>
+    </div>
+</section>
+
+<section id="services" class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">Serviços</h2>
+        <div class="row g-4">
+            {% for service in services %}
+            <div class="col-md-4">
+                <div class="card p-4">
+                    <h5>{{ service.titulo }}</h5>
+                    <p>{{ service.descricao }}</p>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-center">Nenhum serviço cadastrado ainda.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section id="products" class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">Produtos</h2>
+        <div class="row g-4">
+            {% for product in products %}
+            <div class="col-md-4">
+                <div class="card p-4">
+                    <h5>{{ product.nome }}</h5>
+                    <p>{{ product.descricao }}</p>
+                    <strong>R$ {{ product.preco }}</strong>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-center">Nenhum produto cadastrado ainda.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section id="contact" class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">Contato</h2>
+        <form action="/contact" method="POST" class="mx-auto" style="max-width: 500px;">
+            <input type="text" name="nome" class="form-control mb-2" placeholder="Nome" required>
+            <input type="email" name="email" class="form-control mb-2" placeholder="Email" required>
+            <textarea name="mensagem" class="form-control mb-2" placeholder="Mensagem" required></textarea>
+            <button class="btn btn-primary w-100">Enviar</button>
+        </form>
+    </div>
+</section>
+
+<footer class="text-center py-4">
+    <p>© 2026 InNovaIdeia - Todos os direitos reservados</p>
+</footer>
+{% endblock %}
