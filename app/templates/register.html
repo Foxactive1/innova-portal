@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Criar conta{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+    <div class="container">
+        <div class="auth-card content-panel">
+            <span class="eyebrow">Cadastro interno</span>
+            <h1 class="auth-title">Criar acesso</h1>
+            <p class="auth-copy">Cadastre um usuario administrativo para operar o portal com mais seguranca.</p>
+
+            <form method="post" id="register-form" class="auth-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-3">
+                    <label class="form-label" for="register-user">Usuario</label>
+                    <input type="text" id="register-user" name="username" class="form-control" minlength="3" maxlength="30" autocomplete="username" autofocus required>
+                    <div class="helper-text">Use 3 a 30 caracteres com letras, numeros, ponto, hifen ou underscore.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="register-password">Senha</label>
+                    <input type="password" id="register-password" name="password" class="form-control" minlength="8" autocomplete="new-password" required>
+                    <div class="password-meter">
+                        <div class="password-meter-fill" id="password-meter-fill"></div>
+                    </div>
+                    <div class="helper-text" id="password-meter-label">Use pelo menos 8 caracteres.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="register-password-confirm">Confirmar senha</label>
+                    <input type="password" id="register-password-confirm" name="password_confirm" class="form-control" autocomplete="new-password" required>
+                    <div class="helper-text" id="password-match-status">Repita a senha para confirmar.</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100" id="register-submit">
+                    <i class="fa-solid fa-user-plus me-2"></i>Criar conta
+                </button>
+            </form>
+
+            <p class="auth-footer">
+                Ja possui conta?
+                <a href="{{ url_for('auth.login') }}">Fazer login</a>
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/register.js') }}"></script>
+{% endblock %}

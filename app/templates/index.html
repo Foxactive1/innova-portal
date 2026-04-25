@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Tecnologia e IA sob medida{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="container hero-grid">
+        <div>
+            <span class="eyebrow">Consultoria, software e automacao</span>
+            <h1 class="hero-title">Tecnologia com estrategia para acelerar crescimento real.</h1>
+            <p class="hero-copy">
+                Desenvolvemos sistemas, produtos digitais e fluxos com IA para empresas que
+                precisam operar melhor, vender mais e ganhar consistencia.
+            </p>
+            <div class="hero-actions">
+                <a href="#contact" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-comments me-2"></i>Solicitar diagnostico
+                </a>
+                <a href="#services" class="btn btn-outline-light btn-lg">
+                    <i class="fa-solid fa-arrow-down me-2"></i>Ver catalogo
+                </a>
+            </div>
+            <div class="hero-points">
+                <span><i class="fa-solid fa-shield-halved"></i>Seguranca</span>
+                <span><i class="fa-solid fa-gears"></i>Automacao</span>
+                <span><i class="fa-solid fa-chart-line"></i>Escalabilidade</span>
+            </div>
+        </div>
+
+        <aside class="content-panel hero-panel">
+            <span class="panel-label">O que entregamos</span>
+            <div class="feature-list">
+                <article>
+                    <h2>Arquitetura limpa</h2>
+                    <p>Projetos pensados para manutencao, evolucao continua e operacao sem improviso.</p>
+                </article>
+                <article>
+                    <h2>IA aplicada ao negocio</h2>
+                    <p>Automacao, atendimento e inteligencia operacional conectados ao contexto da empresa.</p>
+                </article>
+                <article>
+                    <h2>Entrega orientada a conversao</h2>
+                    <p>Foco em experiencia do cliente, eficiencia interna e resultado comercial.</p>
+                </article>
+            </div>
+        </aside>
+    </div>
+</section>
+
+<section id="services" class="section-space">
+    <div class="container">
+        <div class="section-heading">
+            <span class="eyebrow">Servicos</span>
+            <h2>Especialidades para estruturacao e crescimento digital.</h2>
+            <p>Atuamos do diagnostico tecnico ate a entrega operacional do produto final.</p>
+        </div>
+
+        <div class="catalog-grid">
+            {% for service in services %}
+                <article class="content-panel catalog-card">
+                    <div class="icon-chip"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                    <h3>{{ service.titulo }}</h3>
+                    <p>{{ service.descricao }}</p>
+                </article>
+            {% else %}
+                <div class="empty-state content-panel">
+                    <p>Nenhum servico cadastrado no momento.</p>
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-sm">Abrir dashboard</a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section id="products" class="section-space">
+    <div class="container">
+        <div class="section-heading">
+            <span class="eyebrow">Produtos</span>
+            <h2>Solucoes prontas para reduzir tempo de implantacao.</h2>
+            <p>Catalogo inicial de produtos digitais com foco em vendas, operacao e atendimento.</p>
+        </div>
+
+        <div class="catalog-grid">
+            {% for product in products %}
+                <article class="content-panel catalog-card">
+                    <div class="catalog-header">
+                        <h3>{{ product.nome }}</h3>
+                        <span class="price-badge">{{ product.display_price }}</span>
+                    </div>
+                    <p>{{ product.descricao }}</p>
+                </article>
+            {% else %}
+                <div class="empty-state content-panel">
+                    <p>Nenhum produto cadastrado no momento.</p>
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-sm">Abrir dashboard</a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section id="contact" class="section-space">
+    <div class="container contact-grid">
+        <div>
+            <div class="section-heading left-aligned">
+                <span class="eyebrow">Contato</span>
+                <h2>Leve um desafio real. A resposta volta em linguagem de negocio.</h2>
+                <p>
+                    Conte o contexto da sua empresa, onde esta o gargalo e qual resultado voce
+                    quer atingir. Quanto melhor o briefing, mais consultiva sera a resposta.
+                </p>
+            </div>
+        </div>
+
+        <div class="content-panel contact-card">
+            <form action="{{ url_for('main.contact') }}" method="post" id="contact-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-3">
+                    <label class="form-label" for="contact-name">Nome completo</label>
+                    <input type="text" id="contact-name" name="nome" class="form-control" maxlength="100" autocomplete="name" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="contact-email">E-mail</label>
+                    <input type="email" id="contact-email" name="email" class="form-control" autocomplete="email" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="contact-message">Mensagem</label>
+                    <textarea id="contact-message" name="mensagem" class="form-control" rows="5" maxlength="1000" required></textarea>
+                    <div class="helper-text">Seja especifico sobre processo, equipe, canal ou meta comercial.</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100" id="contact-submit">
+                    <i class="fa-solid fa-paper-plane me-2"></i>Enviar briefing
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/marketing.js') }}"></script>
+{% endblock %}

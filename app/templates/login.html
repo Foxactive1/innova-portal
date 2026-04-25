@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Acesso administrativo{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+    <div class="container">
+        <div class="auth-card content-panel">
+            <span class="eyebrow">Area administrativa</span>
+            <h1 class="auth-title">Entrar na operacao</h1>
+            <p class="auth-copy">Use suas credenciais para acessar dashboard, catalogo e inteligencia comercial.</p>
+
+            <form method="post" class="auth-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-3">
+                    <label class="form-label" for="login-user">Usuario</label>
+                    <input type="text" id="login-user" name="username" class="form-control" maxlength="30" autocomplete="username" autofocus required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="login-password">Senha</label>
+                    <input type="password" id="login-password" name="password" class="form-control" autocomplete="current-password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fa-solid fa-right-to-bracket me-2"></i>Entrar
+                </button>
+            </form>
+
+            <p class="auth-footer">
+                Ainda nao tem acesso?
+                <a href="{{ url_for('auth.register') }}">Criar conta</a>
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}

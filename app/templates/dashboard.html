@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<section class="section-space">
+    <div class="container">
+        <div class="dashboard-header">
+            <div>
+                <span class="eyebrow">Painel administrativo</span>
+                <h1 class="dashboard-title">Operacao comercial e catalogo</h1>
+                <p class="dashboard-copy">
+                    Gerencie servicos, produtos e acompanhe o fluxo de leads em um unico lugar.
+                </p>
+            </div>
+
+            <div class="action-cluster">
+                <form method="post" action="{{ url_for('main.weekly_summary') }}" class="inline-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-light" {% if not ai_enabled %}disabled{% endif %}>
+                        <i class="fa-solid fa-chart-simple me-2"></i>Resumo semanal
+                    </button>
+                </form>
+
+                <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-right-from-bracket me-2"></i>Sair
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="metric-grid">
+            <article class="content-panel metric-card">
+                <span class="metric-label">Leads</span>
+                <strong class="metric-value">{{ leads|length }}</strong>
+                <span class="metric-note">contatos registrados</span>
+            </article>
+            <article class="content-panel metric-card">
+                <span class="metric-label">Servicos</span>
+                <strong class="metric-value">{{ services|length }}</strong>
+                <span class="metric-note">itens publicos</span>
+            </article>
+            <article class="content-panel metric-card">
+                <span class="metric-label">Produtos</span>
+                <strong class="metric-value">{{ products|length }}</strong>
+                <span class="metric-note">itens publicos</span>
+            </article>
+        </div>
+
+        <div class="form-grid">
+            <article class="content-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Cadastrar servico</h2>
+                        <p>Padronize titulo e descricao para manter o catalogo consistente.</p>
+                    </div>
+                </div>
+
+                <form method="post" action="{{ url_for('main.add_service') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label" for="service-title">Titulo</label>
+                        <input type="text" id="service-title" name="titulo" class="form-control" maxlength="100" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="service-description">Descricao</label>
+                        <textarea id="service-description" name="descricao" class="form-control" rows="4" maxlength="500" required></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Salvar servico</button>
+                        <button
+                            type="button"
+                            class="btn btn-outline-light js-ai-generate"
+                            data-endpoint="{{ url_for('main.generate_description') }}"
+                            data-source="#service-title"
+                            data-target="#service-description"
+                            data-type="service"
+                            {% if not ai_enabled %}disabled{% endif %}
+                        >
+                            Gerar descricao com IA
+                        </button>
+                    </div>
+                </form>
+            </article>
+
+            <article class="content-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Cadastrar produto</h2>
+                        <p>Mantenha nome, preco e proposta de valor em um mesmo fluxo.</p>
+                    </div>
+                </div>
+
+                <form method="post" action="{{ url_for('main.add_product') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label" for="product-name">Nome</label>
+                        <input type="text" id="product-name" name="nome" class="form-control" maxlength="100" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="product-price">Preco</label>
+                        <input type="number" id="product-price" name="preco" class="form-control" min="0" step="0.01" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="product-description">Descricao</label>
+                        <textarea id="product-description" name="descricao" class="form-control" rows="4" maxlength="500" required></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Salvar produto</button>
+                        <button
+                            type="button"
+                            class="btn btn-outline-light js-ai-generate"
+                            data-endpoint="{{ url_for('main.generate_description') }}"
+                            data-source="#product-name"
+                            data-target="#product-description"
+                            data-type="product"
+                            {% if not ai_enabled %}disabled{% endif %}
+                        >
+                            Gerar descricao com IA
+                        </button>
+                    </div>
+                </form>
+            </article>
+        </div>
+
+        <section class="dashboard-section">
+            <div class="panel-header">
+                <div>
+                    <h2>Leads recebidos</h2>
+                    <p>Visibilidade rapida sobre interesse comercial e contexto das conversas.</p>
+                </div>
+                <span class="badge-soft">{{ leads|length }} registros</span>
+            </div>
+
+            <div class="content-panel table-panel">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>E-mail</th>
+                                <th>Mensagem</th>
+                                <th>Analise</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lead in leads %}
+                                <tr>
+                                    <td>{{ lead.nome }}</td>
+                                    <td><a class="table-link" href="mailto:{{ lead.email }}">{{ lead.email }}</a></td>
+                                    <td class="lead-message">{{ lead.mensagem }}</td>
+                                    <td>{{ lead.analise or "Nao classificado" }}</td>
+                                    <td>
+                                        {% if lead.data %}
+                                            {{ lead.data.strftime('%d/%m/%Y %H:%M') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-secondary">Nenhum lead recebido ainda.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <div class="item-grid">
+            <section class="dashboard-section">
+                <div class="panel-header">
+                    <div>
+                        <h2>Servicos cadastrados</h2>
+                        <p>Itens publicos exibidos na home institucional.</p>
+                    </div>
+                </div>
+
+                <div class="catalog-grid">
+                    {% for service in services %}
+                        <article class="content-panel item-card">
+                            <div>
+                                <h3>{{ service.titulo }}</h3>
+                                <p>{{ service.descricao }}</p>
+                            </div>
+
+                            <form method="post" action="{{ url_for('main.delete_service', item_id=service.id) }}" class="inline-form js-confirm-form" data-confirm="Remover o servico '{{ service.titulo }}'?">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-light btn-sm">Excluir</button>
+                            </form>
+                        </article>
+                    {% else %}
+                        <div class="empty-state content-panel">
+                            <p>Nenhum servico cadastrado.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="dashboard-section">
+                <div class="panel-header">
+                    <div>
+                        <h2>Produtos cadastrados</h2>
+                        <p>Itens prontos para exposicao comercial.</p>
+                    </div>
+                </div>
+
+                <div class="catalog-grid">
+                    {% for product in products %}
+                        <article class="content-panel item-card">
+                            <div>
+                                <div class="catalog-header">
+                                    <h3>{{ product.nome }}</h3>
+                                    <span class="price-badge">{{ product.display_price }}</span>
+                                </div>
+                                <p>{{ product.descricao }}</p>
+                            </div>
+
+                            <form method="post" action="{{ url_for('main.delete_product', item_id=product.id) }}" class="inline-form js-confirm-form" data-confirm="Remover o produto '{{ product.nome }}'?">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-light btn-sm">Excluir</button>
+                            </form>
+                        </article>
+                    {% else %}
+                        <div class="empty-state content-panel">
+                            <p>Nenhum produto cadastrado.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

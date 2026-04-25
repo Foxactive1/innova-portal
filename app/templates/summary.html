@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Resumo semanal{% endblock %}
+
+{% block content %}
+<section class="section-space">
+    <div class="container summary-wrapper">
+        <div class="section-heading left-aligned">
+            <span class="eyebrow">Resumo executivo</span>
+            <h1 class="dashboard-title">Leitura comercial da ultima semana</h1>
+            <p>Analise gerada a partir de {{ total_leads }} lead{% if total_leads != 1 %}s{% endif %} recebidos nos ultimos {{ period_days }} dias.</p>
+        </div>
+
+        <div class="summary-actions">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-light">
+                <i class="fa-solid fa-arrow-left me-2"></i>Voltar ao dashboard
+            </a>
+        </div>
+
+        <article class="content-panel summary-panel">{{ summary }}</article>
+    </div>
+</section>
+{% endblock %}
