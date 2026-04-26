@@ -262,6 +262,10 @@ def generate_description():
 
     return jsonify({"description": description})
 
+@app.route("/health")
+def health():
+    return {"status": "ok"}, 200
+
 
 @main.route("/weekly-summary", methods=["POST"])
 @login_required
