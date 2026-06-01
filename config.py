@@ -4,31 +4,36 @@ import os
 import warnings
 from datetime import timedelta
 from pathlib import Path
+
 from dotenv import load_dotenv
-load_dotenv('.env')  # ← ADICIONE ESTA LINHA
 
 BASE_DIR = Path(__file__).resolve().parent
 INSTANCE_DIR = BASE_DIR / "instance"
 
+# Carrega .env a partir da raiz do projeto
+load_dotenv(BASE_DIR / ".env")
+
 
 class Config:
-    GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # ← ADICIONE
-    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile")  # ← ADICIONE
     SECRET_KEY = (
         os.getenv("FLASK_SECRET_KEY")
         or os.getenv("SECRET_KEY")
         or "dev-only-insecure-key-change-me"
     )
 
-    if SECRET_KEY == "dev-only-insecure-key-change-me":
+    # ⚠️ Só avisa em ambiente de produção
+    if (
+        SECRET_KEY == "dev-only-insecure-key-change-me"
+        and os.getenv("FLASK_ENV", "development") == "production"
+    ):
         warnings.warn(
-            "[InNovaIdeia] SECRET_KEY nao configurada. Defina FLASK_SECRET_KEY "
-            "antes de publicar em producao.",
+            "[InNovaIdeia] SECRET_KEY nao configurada. Defina FLASK_SECRET_KEY antes de publicar em producao.",
             RuntimeWarning,
         )
 
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL") or (
-        f"sqlite:///{INSTANCE_DIR / 'database.db'}"
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        "DATABASE_URL",
+        f"sqlite:///{INSTANCE_DIR / 'database.db'}",
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
@@ -36,15 +41,19 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = False
+
     REMEMBER_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_SAMESITE = "Lax"
     REMEMBER_COOKIE_SECURE = False
+
     PERMANENT_SESSION_LIFETIME = timedelta(
         hours=int(os.getenv("SESSION_DURATION_HOURS", "8"))
     )
 
     WTF_CSRF_TIME_LIMIT = int(os.getenv("CSRF_TIME_LIMIT_SECONDS", "3600"))
+
     RATELIMIT_HEADERS_ENABLED = True
+    RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
 
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
     GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")

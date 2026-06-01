@@ -15,16 +15,9 @@ from flask import (
 from flask_login import login_required
 from sqlalchemy.exc import SQLAlchemyError
 
-from .ai import (
-    AIServiceError,
-    AIUnavailableError,
-    classify_lead,
-    generate_chat_reply,
-    generate_marketing_description,
-    generate_weekly_summary,
-)
+from .ai import get_ai, AIServiceError, AIUnavailableError
 from .database import db
-from .extensions import limiter
+from .extensions import csrf, limiter
 from .models import Lead, Product, Service
 from .utils import clamp_text, parse_price, validate_email_address
 
@@ -48,7 +41,7 @@ def contact():
     raw_message = (request.form.get("mensagem") or "").strip()
 
     if not nome or not raw_message:
-        flash("Preencha todos os campos do formulario.", "warning")
+        flash("Preencha todos os campos do formulário.", "warning")
         return redirect(url_for("main.index", _anchor="contact"))
 
     if len(raw_message) > message_limit:
@@ -64,22 +57,29 @@ def contact():
         flash(str(exc), "warning")
         return redirect(url_for("main.index", _anchor="contact"))
 
-    analise = "Classificacao automatica indisponivel no momento."
+    ai = get_ai()
     try:
-        analise = classify_lead(raw_message)
+        analise = ai.classify_lead(raw_message)
     except AIUnavailableError:
-        current_app.logger.info("Groq indisponivel para classificar lead.")
+        current_app.logger.info("Groq indisponível para classificar lead.")
+        analise = "Classificação automática indisponível no momento."
     except AIServiceError:
         current_app.logger.exception("Falha ao classificar lead com IA.")
+        analise = "Classificação automática indisponível no momento."
 
     try:
-        lead = Lead(nome=nome, email=email, mensagem=raw_message, analise=analise)
+        lead = Lead(
+            nome=nome,
+            email=email,
+            mensagem=raw_message,
+            ai_summary=analise,          # <- campo existente no modelo
+        )
         db.session.add(lead)
         db.session.commit()
     except SQLAlchemyError:
         db.session.rollback()
         current_app.logger.exception("Falha ao salvar lead.")
-        flash("Nao foi possivel salvar sua mensagem. Tente novamente.", "danger")
+        flash("Não foi possível salvar sua mensagem. Tente novamente.", "danger")
         return redirect(url_for("main.index", _anchor="contact"))
 
     flash("Mensagem enviada com sucesso. Em breve retornaremos.", "success")
@@ -87,6 +87,7 @@ def contact():
 
 
 @main.route("/api/chat", methods=["POST"])
+@csrf.exempt
 @limiter.limit(lambda: current_app.config["CHAT_RATE_LIMIT"])
 def chat():
     payload = request.get_json(silent=True) or {}
@@ -101,24 +102,25 @@ def chat():
             jsonify(
                 {
                     "reply": (
-                        f"Mensagem muito longa. Limite maximo de {max_length} caracteres."
+                        f"Mensagem muito longa. Limite máximo de {max_length} caracteres."
                     )
                 }
             ),
             400,
         )
 
+    ai = get_ai()
     try:
-        reply, intent = generate_chat_reply(user_message)
+        reply, intent = ai.generate_chat_reply(user_message)
     except AIUnavailableError:
-        return jsonify({"reply": "Assistente de IA indisponivel no momento."}), 503
+        return jsonify({"reply": "Assistente de IA indisponível no momento."}), 503
     except AIServiceError:
-        current_app.logger.exception("Falha no endpoint publico de chat.")
+        current_app.logger.exception("Falha no endpoint público de chat.")
         return (
             jsonify(
                 {
                     "reply": (
-                        "Assistente temporariamente indisponivel. "
+                        "Assistente temporariamente indisponível. "
                         "Tente novamente em instantes."
                     )
                 }
@@ -132,7 +134,7 @@ def chat():
 @main.route("/dashboard")
 @login_required
 def dashboard():
-    leads = Lead.query.order_by(Lead.data.desc()).all()
+    leads = Lead.query.order_by(Lead.created_at.desc()).all()   # campo correto
     services = Service.query.order_by(Service.titulo.asc()).all()
     products = Product.query.order_by(Product.nome.asc()).all()
     return render_template(
@@ -155,7 +157,7 @@ def add_service():
     descricao = clamp_text(request.form.get("descricao"), description_limit)
 
     if not titulo or not descricao:
-        flash("Titulo e descricao sao obrigatorios.", "warning")
+        flash("Título e descrição são obrigatórios.", "warning")
         return redirect(url_for("main.dashboard"))
 
     try:
@@ -164,11 +166,11 @@ def add_service():
         db.session.commit()
     except SQLAlchemyError:
         db.session.rollback()
-        current_app.logger.exception("Falha ao criar servico.")
-        flash("Nao foi possivel cadastrar o servico.", "danger")
+        current_app.logger.exception("Falha ao criar serviço.")
+        flash("Não foi possível cadastrar o serviço.", "danger")
         return redirect(url_for("main.dashboard"))
 
-    flash("Servico cadastrado com sucesso.", "success")
+    flash("Serviço cadastrado com sucesso.", "success")
     return redirect(url_for("main.dashboard"))
 
 
@@ -182,7 +184,7 @@ def add_product():
     descricao = clamp_text(request.form.get("descricao"), description_limit)
 
     if not nome or not descricao:
-        flash("Nome e descricao sao obrigatorios.", "warning")
+        flash("Nome e descrição são obrigatórios.", "warning")
         return redirect(url_for("main.dashboard"))
 
     try:
@@ -198,7 +200,7 @@ def add_product():
     except SQLAlchemyError:
         db.session.rollback()
         current_app.logger.exception("Falha ao criar produto.")
-        flash("Nao foi possivel cadastrar o produto.", "danger")
+        flash("Não foi possível cadastrar o produto.", "danger")
         return redirect(url_for("main.dashboard"))
 
     flash("Produto cadastrado com sucesso.", "success")
@@ -215,11 +217,11 @@ def delete_service(item_id):
         db.session.commit()
     except SQLAlchemyError:
         db.session.rollback()
-        current_app.logger.exception("Falha ao remover servico.")
-        flash("Nao foi possivel remover o servico.", "danger")
+        current_app.logger.exception("Falha ao remover serviço.")
+        flash("Não foi possível remover o serviço.", "danger")
         return redirect(url_for("main.dashboard"))
 
-    flash(f'Servico "{service.titulo}" removido com sucesso.', "success")
+    flash(f'Serviço "{service.titulo}" removido com sucesso.', "success")
     return redirect(url_for("main.dashboard"))
 
 
@@ -234,7 +236,7 @@ def delete_product(item_id):
     except SQLAlchemyError:
         db.session.rollback()
         current_app.logger.exception("Falha ao remover produto.")
-        flash("Nao foi possivel remover o produto.", "danger")
+        flash("Não foi possível remover o produto.", "danger")
         return redirect(url_for("main.dashboard"))
 
     flash(f'Produto "{product.nome}" removido com sucesso.', "success")
@@ -250,19 +252,21 @@ def generate_description():
     item_type = clamp_text(request.form.get("tipo"), 20)
 
     if not titulo or item_type not in {"service", "product"}:
-        return jsonify({"error": "Parametros invalidos."}), 400
+        return jsonify({"error": "Parâmetros inválidos."}), 400
 
+    ai = get_ai()
     try:
-        description = generate_marketing_description(titulo, item_type)
+        description = ai.generate_marketing_description(titulo, item_type)
     except AIUnavailableError:
-        return jsonify({"error": "IA indisponivel no momento."}), 503
+        return jsonify({"error": "IA indisponível no momento."}), 503
     except AIServiceError:
-        current_app.logger.exception("Falha ao gerar descricao com IA.")
-        return jsonify({"error": "Erro ao gerar descricao."}), 503
+        current_app.logger.exception("Falha ao gerar descrição com IA.")
+        return jsonify({"error": "Erro ao gerar descrição."}), 503
 
     return jsonify({"description": description})
 
-@app.route("/health")
+
+@main.route("/health")
 def health():
     return {"status": "ok"}, 200
 
@@ -274,24 +278,22 @@ def weekly_summary():
     week_ago = datetime.utcnow() - timedelta(days=7)
     max_leads = current_app.config["MAX_SUMMARY_LEADS"]
     leads = (
-        Lead.query.filter(Lead.data >= week_ago)
-        .order_by(Lead.data.desc())
+        Lead.query.filter(Lead.created_at >= week_ago)   # campo correto
+        .order_by(Lead.created_at.desc())
         .limit(max_leads)
         .all()
     )
 
     if not leads:
-        flash("Nenhum lead recebido nos ultimos 7 dias.", "info")
+        flash("Nenhum lead recebido nos últimos 7 dias.", "info")
         return redirect(url_for("main.dashboard"))
 
+    ai = get_ai()
     try:
-        summary = generate_weekly_summary(leads)
-    except AIUnavailableError:
-        flash("IA indisponivel para gerar o resumo agora.", "warning")
-        return redirect(url_for("main.dashboard"))
-    except AIServiceError:
+        summary = ai.generate_weekly_summary(leads)
+    except (AIUnavailableError, AIServiceError):
         current_app.logger.exception("Falha ao gerar resumo semanal.")
-        flash("Nao foi possivel gerar o resumo semanal.", "danger")
+        flash("Não foi possível gerar o resumo semanal.", "danger")
         return redirect(url_for("main.dashboard"))
 
     return render_template(

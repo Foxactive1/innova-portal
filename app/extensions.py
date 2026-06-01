@@ -1,13 +1,28 @@
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
+from flask_login import LoginManager
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
-db = SQLAlchemy()
+# 🗄️ Database
+db = SQLAlchemy(
+    session_options={
+        "expire_on_commit": False  # evita reload desnecessário após commit
+    }
+)
+
+# 🔐 CSRF Protection
 csrf = CSRFProtect()
+
+# 🔑 Login Manager
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
 login_manager.login_message = "Voce precisa fazer login para acessar esta pagina."
 login_manager.login_message_category = "warning"
-limiter = Limiter(key_func=get_remote_address, default_limits=[])
+login_manager.session_protection = "strong"
+
+# 🚦 Rate Limiter
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=[],  # você já controla por rota via config
+)

@@ -1,3 +1,7 @@
+"""
+Módulo de inteligência artificial – arquitetura desacoplada (corrigida).
+"""
+
 from __future__ import annotations
 
 import logging
@@ -5,292 +9,304 @@ from flask import current_app, g
 
 from .models import Product, Service
 
-# Configurar logger para IA
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Exceções
+# ---------------------------------------------------------------------------
 
 class AIServiceError(RuntimeError):
     """Erro genérico de serviço de IA (problema na API/rede)."""
     pass
 
-
 class AIUnavailableError(AIServiceError):
     """IA indisponível (sem chave configurada ou limite atingido)."""
     pass
-
 
 class AIAuthenticationError(AIServiceError):
     """Erro de autenticação com a API Groq."""
     pass
 
-
-def get_groq_client():
-    """
-    Obter ou criar cliente Groq singleton por request.
-
-    Retorna None se GROQ_API_KEY não estiver configurada.
-    """
-    api_key = current_app.config.get("GROQ_API_KEY")
-    if not api_key:
-        logger.warning(
-            "[InNovaIdeia] GROQ_API_KEY não configurada. "
-            "IA indisponível. Configure em .env ou config.py"
-        )
-        return None
-
-    # Singleton por request (flask g context)
-    client = getattr(g, "_groq_client", None)
-    if client is None:
-        try:
-            from groq import Groq
-            client = Groq(api_key=api_key)
-            g._groq_client = client
-            logger.info("[InNovaIdeia] Cliente Groq inicializado com sucesso.")
-        except ImportError:
-            logger.error(
-                "[InNovaIdeia] Biblioteca 'groq' não instalada. "
-                "Execute: pip install groq"
-            )
-            raise AIServiceError(
-                "Biblioteca Groq não instalada. Execute 'pip install groq'."
-            ) from None
-        except Exception as exc:
-            logger.exception("[InNovaIdeia] Erro ao inicializar cliente Groq.")
-            raise AIServiceError(f"Erro ao inicializar Groq: {exc}") from exc
-
-    return client
-
-
-def detect_intent(message):
-    """Detectar intenção do usuário pela mensagem."""
-    msg = (message or "").lower()
-    if any(keyword in msg for keyword in ("preco", "preço", "valor", "quanto custa")):
-        return "pricing"
-    if any(keyword in msg for keyword in ("crm", "sistema", "plataforma", "saas")):
-        return "product_interest"
-    if any(keyword in msg for keyword in ("automacao", "automação", "bot", "whatsapp")):
-        return "automation"
-    if any(keyword in msg for keyword in ("site", "landing page", "pagina", "página")):
-        return "web_dev"
-    return "general"
-
+# ---------------------------------------------------------------------------
+# Catálogo público
+# ---------------------------------------------------------------------------
 
 def _catalog_context():
-    """Gerar contexto com catálogo de serviços e produtos."""
     services = Service.query.order_by(Service.titulo.asc()).limit(8).all()
     products = Product.query.order_by(Product.nome.asc()).limit(8).all()
 
     services_text = "\n".join(
-        f"- {service.titulo}: {service.descricao[:180]}" for service in services
-    ) or "- Nenhum servico publico cadastrado."
+        f"- {s.titulo}: {s.descricao[:180]}" for s in services
+    ) or "- Nenhum serviço público cadastrado."
 
     products_text = "\n".join(
-        f"- {product.nome} ({product.display_price}): {product.descricao[:180]}"
-        for product in products
-    ) or "- Nenhum produto publico cadastrado."
+        f"- {p.nome} ({p.display_price}): {p.descricao[:180]}"
+        for p in products
+    ) or "- Nenhum produto público cadastrado."
 
     return services_text, products_text
 
+# ---------------------------------------------------------------------------
+# 1. GroqProvider – não depende de current_app no construtor
+# ---------------------------------------------------------------------------
 
-def _completion(messages, temperature, max_tokens):
-    """
-    Chamar Groq API para completar mensagens.
+class GroqProvider:
+    def __init__(self, api_key=None, model=None):
+        self.api_key = api_key
+        self.model = model or "llama-3.3-70b-versatile"
 
-    Retorna: str (conteúdo da resposta)
-    Levanta: AIUnavailableError, AIAuthenticationError, AIServiceError
-    """
-    client = get_groq_client()
-    if not client:
-        raise AIUnavailableError(
-            "Integracao de IA indisponivel. Configure GROQ_API_KEY."
+    def _get_client(self):
+        if not self.api_key:
+            raise AIUnavailableError("GROQ_API_KEY não configurada.")
+        client = getattr(g, "_groq_client", None)
+        if client is None:
+            try:
+                from groq import Groq
+                client = Groq(api_key=self.api_key)
+                g._groq_client = client
+                logger.info("Cliente Groq inicializado.")
+            except ImportError:
+                raise AIServiceError("Biblioteca 'groq' não instalada.") from None
+            except Exception as exc:
+                raise AIServiceError(f"Erro ao inicializar Groq: {exc}") from exc
+        return client
+
+    def complete(self, messages, temperature=0.5, max_tokens=320):
+        client = self._get_client()
+        try:
+            logger.debug("Chamando Groq model=%s", self.model)
+            resp = client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            content = resp.choices[0].message.content.strip()
+            logger.debug("Resposta Groq (%d caracteres)", len(content))
+            return content
+        except Exception as exc:
+            exc_name = type(exc).__name__
+            msg = str(exc)
+            if "RateLimitError" in exc_name or "rate limit" in msg.lower():
+                raise AIUnavailableError("Limite de requisições atingido.") from exc
+            if "AuthenticationError" in exc_name or "401" in msg:
+                raise AIAuthenticationError("GROQ_API_KEY inválida.") from exc
+            if "ConnectionError" in exc_name or "timeout" in msg.lower():
+                raise AIUnavailableError("Serviço de IA indisponível.") from exc
+            logger.exception("Erro Groq (%s): %s", exc_name, msg)
+            raise AIServiceError(f"Erro na IA: {exc_name}") from exc
+
+# ---------------------------------------------------------------------------
+# 2. IntentEngine
+# ---------------------------------------------------------------------------
+
+class IntentEngine:
+    KEYWORDS = [
+        (("preco", "preço", "valor", "quanto custa"), "pricing"),
+        (("crm", "sistema", "plataforma", "saas"), "product_interest"),
+        (("automacao", "automação", "bot", "whatsapp"), "automation"),
+        (("site", "landing page", "pagina", "página"), "web_dev"),
+    ]
+
+    def detect(self, message: str) -> str:
+        msg = (message or "").lower()
+        for keywords, intent in self.KEYWORDS:
+            if any(kw in msg for kw in keywords):
+                return intent
+        return "general"
+
+# ---------------------------------------------------------------------------
+# 3. PromptBuilder
+# ---------------------------------------------------------------------------
+
+class PromptBuilder:
+    @staticmethod
+    def classification_prompt(message: str) -> list[dict]:
+        services_text, products_text = _catalog_context()
+        system = (
+            "Você classifica leads para uma consultoria de tecnologia. "
+            "Responda em uma única linha: 'Classificacao: X | Sugestao: Y'."
         )
-
-    model = current_app.config.get("GROQ_MODEL", "mixtral-8x7b-32768")
-
-    try:
-        logger.debug(
-            f"[Groq] Chamando {model} com temp={temperature}, "
-            f"max_tokens={max_tokens}, messages={len(messages)}"
+        user = (
+            "Catálogo público:\n"
+            f"Serviços:\n{services_text}\n\n"
+            f"Produtos:\n{products_text}\n\n"
+            f"Mensagem do lead:\n{message}"
         )
+        return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
+    @staticmethod
+    def chat_prompt(message: str, intent: str) -> list[dict]:
+        services_text, products_text = _catalog_context()
+        system = (
+            "Você é um consultor comercial da InNovaIdeia.\n\n"
+            f"Catálogo público de serviços:\n{services_text}\n\n"
+            f"Catálogo público de produtos:\n{products_text}\n\n"
+            f"Intenção detectada: {intent}\n\n"
+            "Regras:\n- use apenas o catálogo público\n"
+            "- nunca cite leads ou dados sensíveis\n"
+            "- responda em português do Brasil\n"
+            "- seja objetivo e consultivo"
         )
+        return [
+            {"role": "system", "content": system},
+            {"role": "user", "content": message},
+        ]
 
-        content = response.choices[0].message.content.strip()
-        logger.debug(f"[Groq] Resposta recebida ({len(content)} chars)")
-        return content
-
-    except ImportError as exc:
-        logger.error("[Groq] Biblioteca groq não instalada.")
-        raise AIServiceError("Groq não instalado. pip install groq") from exc
-
-    except Exception as exc:
-        exc_type = type(exc).__name__
-        exc_msg = str(exc)
-
-        # Diagnosticar tipo específico de erro
-        if "RateLimitError" in exc_type or "rate limit" in exc_msg.lower():
-            logger.warning(f"[Groq] Rate limit atingido: {exc_msg}")
-            raise AIUnavailableError(
-                "Limite de requisições atingido. Tente novamente em instantes."
-            ) from exc
-
-        elif "AuthenticationError" in exc_type or "401" in exc_msg:
-            logger.error(f"[Groq] Erro de autenticação: {exc_msg}")
-            raise AIAuthenticationError(
-                "GROQ_API_KEY inválida ou expirada."
-            ) from exc
-
-        elif "ConnectionError" in exc_type or "timeout" in exc_msg.lower():
-            logger.error(f"[Groq] Erro de conexão: {exc_msg}")
-            raise AIUnavailableError(
-                "Servico de IA indisponivel momentaneamente."
-            ) from exc
-
-        else:
-            logger.exception(f"[Groq] Erro desconhecido ({exc_type}): {exc_msg}")
-            raise AIServiceError(
-                f"Erro ao consultar IA: {exc_type}"
-            ) from exc
-
-
-# ============================================================================
-# FUNÇÕES PÚBLICAS (usadas em routes.py)
-# ============================================================================
-
-def classify_lead(message):
-    """
-    Classificar lead usando Groq.
-
-    Retorna: str no formato "Classificacao: X | Sugestao: Y"
-    """
-    services_text, products_text = _catalog_context()
-    system_prompt = (
-        "Voce classifica leads para uma consultoria de tecnologia. "
-        "Analise somente a mensagem recebida e use o catalogo publico informado. "
-        "Responda em uma unica linha no formato: "
-        "'Classificacao: X | Sugestao: Y'."
-    )
-    user_prompt = (
-        "Catalogo publico:\n"
-        f"Servicos:\n{services_text}\n\n"
-        f"Produtos:\n{products_text}\n\n"
-        f"Mensagem do lead:\n{message}"
-    )
-
-    try:
-        return _completion(
-            [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.2,
-            max_tokens=120,
+    @staticmethod
+    def marketing_prompt(title: str, type_label: str) -> list[dict]:
+        user = (
+            f"Crie uma descrição profissional para um {type_label} chamado '{title}'. "
+            "Use um único parágrafo com no máximo 90 palavras, linguagem clara, "
+            "tom premium e foco em resultado para o cliente."
         )
-    except AIServiceError as exc:
-        logger.error(f"[classify_lead] {exc}")
-        raise
+        return [{"role": "user", "content": user}]
 
-
-def generate_chat_reply(message):
-    """
-    Gerar resposta de chat contextualizada.
-
-    Retorna: tuple (reply: str, intent: str)
-    """
-    services_text, products_text = _catalog_context()
-    intent = detect_intent(message)
-
-    system_prompt = f"""
-Voce e um consultor comercial da InNovaIdeia.
-
-Catalogo publico de servicos:
-{services_text}
-
-Catalogo publico de produtos:
-{products_text}
-
-Intencao principal detectada: {intent}
-
-Regras:
-- use apenas o catalogo publico acima
-- nunca cite leads, operacoes internas ou dados sensiveis
-- nao invente servicos nem precos
-- responda em portugues do Brasil
-- seja objetivo, consultivo e orientado a conversao
-""".strip()
-
-    try:
-        reply = _completion(
-            [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": message},
-            ],
-            temperature=0.5,
-            max_tokens=320,
+    @staticmethod
+    def weekly_summary_prompt(leads) -> list[dict]:
+        lead_block = "\n".join(
+            f"- {lead.nome} ({lead.email}): {lead.mensagem[:220]}" for lead in leads
         )
-        return reply, intent
-    except AIServiceError as exc:
-        logger.error(f"[generate_chat_reply] {exc}")
-        raise
-
-
-def generate_marketing_description(title, item_type):
-    """
-    Gerar descricao de marketing para servico/produto.
-
-    Retorna: str (descricao)
-    """
-    type_label = "servico" if item_type == "service" else "produto"
-    prompt = (
-        f"Crie uma descricao profissional para um {type_label} chamado '{title}'. "
-        "Use um unico paragrafo com no maximo 90 palavras, linguagem clara, "
-        "tom premium e foco em resultado para o cliente."
-    )
-
-    try:
-        return _completion(
-            [{"role": "user", "content": prompt}],
-            temperature=0.6,
-            max_tokens=160,
+        user = (
+            "Escreva um resumo executivo semanal para uma consultoria de tecnologia "
+            "com base nos leads abaixo. Entregue:\n"
+            "1. Principais dores recorrentes\n"
+            "2. Oportunidades comerciais\n"
+            "3. Recomendações operacionais imediatas\n"
+            "4. Próximos passos sugeridos\n\n"
+            f"Leads:\n{lead_block}"
         )
-    except AIServiceError as exc:
-        logger.error(f"[generate_marketing_description] {exc}")
-        raise
+        return [{"role": "user", "content": user}]
+
+# ---------------------------------------------------------------------------
+# 4. LeadScoringEngine
+# ---------------------------------------------------------------------------
+
+class LeadScoringEngine:
+    def __init__(self, groq_provider: GroqProvider, prompt_builder: PromptBuilder):
+        self.groq = groq_provider
+        self.prompt_builder = prompt_builder
+
+    def classify(self, message: str) -> str:
+        messages = self.prompt_builder.classification_prompt(message)
+        return self.groq.complete(messages, temperature=0.2, max_tokens=120)
+
+# ---------------------------------------------------------------------------
+# 5. MemoryService (placeholder)
+# ---------------------------------------------------------------------------
+
+class MemoryService:
+    def load_context(self, lead_id=None):
+        return ""
+
+    def save_turn(self, lead_id, role, message):
+        pass
+
+# ---------------------------------------------------------------------------
+# 6. FallbackResponses
+# ---------------------------------------------------------------------------
+
+class FallbackResponses:
+    @staticmethod
+    def classification():
+        return "Classificacao automatica indisponivel no momento."
+
+    @staticmethod
+    def chat():
+        return "Assistente de IA indisponível no momento."
+
+    @staticmethod
+    def marketing():
+        return "Descrição gerada automaticamente indisponível."
+
+    @staticmethod
+    def weekly_summary():
+        return "Resumo semanal indisponível no momento."
+
+# ---------------------------------------------------------------------------
+# 7. AIOrchestrator – recebe api_key e model explicitamente
+# ---------------------------------------------------------------------------
+
+class AIOrchestrator:
+    def __init__(
+        self,
+        groq_provider: GroqProvider | None = None,
+        api_key: str | None = None,
+        model: str | None = None,
+        intent_engine: IntentEngine | None = None,
+        prompt_builder: PromptBuilder | None = None,
+        lead_scoring: LeadScoringEngine | None = None,
+        memory: MemoryService | None = None,
+        fallback: FallbackResponses | None = None,
+    ):
+        # Se receber um GroqProvider já instanciado, usa; senão cria um com as configs
+        self.groq = groq_provider if groq_provider else GroqProvider(api_key=api_key, model=model)
+        self.intent = intent_engine or IntentEngine()
+        self.prompts = prompt_builder or PromptBuilder()
+        self.scoring = lead_scoring or LeadScoringEngine(self.groq, self.prompts)
+        self.memory = memory or MemoryService()
+        self.fallback = fallback or FallbackResponses()
+
+    def classify_lead(self, message: str) -> str:
+        try:
+            return self.scoring.classify(message)
+        except AIUnavailableError:
+            logger.info("Groq indisponível para classificar lead.")
+            return self.fallback.classification()
+        except AIServiceError:
+            logger.exception("Falha ao classificar lead.")
+            return self.fallback.classification()
+
+    def generate_chat_reply(self, message: str) -> tuple[str, str]:
+        intent = self.intent.detect(message)
+        try:
+            messages = self.prompts.chat_prompt(message, intent)
+            reply = self.groq.complete(messages, temperature=0.5, max_tokens=320)
+            return reply, intent
+        except AIUnavailableError:
+            return self.fallback.chat(), intent
+        except AIServiceError:
+            logger.exception("Falha no chat público.")
+            return self.fallback.chat(), intent
+
+    def generate_marketing_description(self, title: str, item_type: str) -> str:
+        type_label = "serviço" if item_type == "service" else "produto"
+        try:
+            messages = self.prompts.marketing_prompt(title, type_label)
+            return self.groq.complete(messages, temperature=0.6, max_tokens=160)
+        except AIUnavailableError:
+            return self.fallback.marketing()
+        except AIServiceError:
+            logger.exception("Falha ao gerar descrição.")
+            return self.fallback.marketing()
+
+    def generate_weekly_summary(self, leads) -> str:
+        if not leads:
+            raise ValueError("Nenhum lead para gerar resumo.")
+        try:
+            messages = self.prompts.weekly_summary_prompt(leads)
+            return self.groq.complete(messages, temperature=0.4, max_tokens=700)
+        except AIUnavailableError:
+            return self.fallback.weekly_summary()
+        except AIServiceError:
+            logger.exception("Falha ao gerar resumo semanal.")
+            return self.fallback.weekly_summary()
 
 
-def generate_weekly_summary(leads):
-    """
-    Gerar resumo semanal de leads.
+# ---------------------------------------------------------------------------
+# Funções de integração com a aplicação Flask
+# ---------------------------------------------------------------------------
 
-    Retorna: str (resumo executivo)
-    """
-    if not leads:
-        raise ValueError("Nao ha leads suficientes para gerar resumo.")
+def init_ai(app):
+    """Inicializa e registra o AIOrchestrator na extensão Flask."""
+    api_key = app.config.get("GROQ_API_KEY")
+    model = app.config.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+    app.extensions["ai"] = AIOrchestrator(api_key=api_key, model=model)
+    logger.info("AIOrchestrator inicializado com sucesso.")
 
-    lead_block = "\n".join(
-        f"- {lead.nome} ({lead.email}): {lead.mensagem[:220]}" for lead in leads
-    )
-    prompt = (
-        "Voce esta escrevendo um resumo executivo semanal para uma consultoria de "
-        "tecnologia. A partir dos leads abaixo, entregue:\n"
-        "1. Principais dores recorrentes\n"
-        "2. Oportunidades comerciais\n"
-        "3. Recomendacoes operacionais imediatas\n"
-        "4. Proximos passos sugeridos\n\n"
-        f"Leads:\n{lead_block}"
-    )
 
-    try:
-        return _completion(
-            [{"role": "user", "content": prompt}],
-            temperature=0.4,
-            max_tokens=700,
-        )
-    except AIServiceError as exc:
-        logger.error(f"[generate_weekly_summary] {exc}")
-        raise
+def get_ai() -> AIOrchestrator:
+    """Recupera o AIOrchestrator registrado na aplicação Flask."""
+    if "ai" not in current_app.extensions:
+        raise RuntimeError("AIOrchestrator não foi inicializado. Chame init_ai(app).")
+    return current_app.extensions["ai"]

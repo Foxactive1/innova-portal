@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="container page-shell">
+
+    <!-- HEADER -->
+    <div class="dashboard-header">
+        <div>
+            <h1 class="dashboard-title">Dashboard</h1>
+            <p class="dashboard-copy">Gestão inteligente de serviços, produtos e leads</p>
+        </div>
+    </div>
+
+    <!-- MÉTRICAS -->
+    <div class="metric-grid">
+        <div class="content-panel metric-card">
+            <span class="metric-label">Serviços</span>
+            <span class="metric-value">{{ services|length }}</span>
+        </div>
+
+        <div class="content-panel metric-card">
+            <span class="metric-label">Produtos</span>
+            <span class="metric-value">{{ products|length }}</span>
+        </div>
+
+        <div class="content-panel metric-card">
+            <span class="metric-label">Leads</span>
+            <span class="metric-value">{{ leads|length }}</span>
+        </div>
+    </div>
+
+    <!-- FORMULÁRIOS -->
+    <div class="form-grid">
+
+        <!-- SERVIÇO -->
+        <div class="content-panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Adicionar Serviço</h2>
+                    <p>Cadastre novos serviços oferecidos</p>
+                </div>
+            </div>
+
+            <form method="POST" action="/add-service" class="form-actions">
+                <input type="text" name="titulo" class="form-control" placeholder="Título" required>
+                <textarea name="descricao" class="form-control" placeholder="Descrição" required></textarea>
+
+                <button class="btn btn-primary">Salvar Serviço</button>
+            </form>
+        </div>
+
+        <!-- PRODUTO -->
+        <div class="content-panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Adicionar Produto</h2>
+                    <p>Adicione produtos ao catálogo</p>
+                </div>
+            </div>
+
+            <form method="POST" action="/add-product" class="form-actions">
+                <input type="text" name="nome" class="form-control" placeholder="Nome" required>
+                <input type="number" step="0.01" name="preco" class="form-control" placeholder="Preço" required>
+                <textarea name="descricao" class="form-control" placeholder="Descrição" required></textarea>
+
+                <button class="btn btn-primary">Salvar Produto</button>
+            </form>
+        </div>
+
+    </div>
+
+    <!-- LEADS -->
+    <div class="dashboard-section">
+        <div class="content-panel table-panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Leads Recebidos</h2>
+                    <p>Monitoramento de contatos e oportunidades</p>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Mensagem</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lead in leads %}
+                        <tr>
+                            <td>{{ lead.nome }}</td>
+                            <td>
+                                <a href="mailto:{{ lead.email }}" class="table-link">
+                                    {{ lead.email }}
+                                </a>
+                            </td>
+                            <td class="lead-message">{{ lead.mensagem }}</td>
+                            <td>{{ lead.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state">
+                                    <p>Nenhum lead registrado ainda.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SERVIÇOS -->
+    <div class="dashboard-section">
+        <div class="panel-header">
+            <div>
+                <h2>Serviços Cadastrados</h2>
+                <p>Gerencie seus serviços ativos</p>
+            </div>
+        </div>
+
+        <div class="catalog-grid">
+            {% for service in services %}
+            <div class="content-panel catalog-card">
+                <div class="catalog-header">
+                    <h3>{{ service.titulo }}</h3>
+                    <span class="badge-soft">Serviço</span>
+                </div>
+
+                <p>{{ service.descricao }}</p>
+
+                <div class="action-cluster">
+                    <a href="/delete-service/{{ service.id }}"
+                       class="btn btn-outline-light"
+                       onclick="return confirm('Remover serviço?')">
+                       Excluir
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>Nenhum serviço cadastrado.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- PRODUTOS -->
+    <div class="dashboard-section">
+        <div class="panel-header">
+            <div>
+                <h2>Produtos Cadastrados</h2>
+                <p>Controle completo do catálogo</p>
+            </div>
+        </div>
+
+        <div class="catalog-grid">
+            {% for product in products %}
+            <div class="content-panel catalog-card">
+                <div class="catalog-header">
+                    <h3>{{ product.nome }}</h3>
+                    <span class="price-badge">R$ {{ product.preco }}</span>
+                </div>
+
+                <p>{{ product.descricao }}</p>
+
+                <div class="action-cluster">
+                    <a href="/delete-product/{{ product.id }}"
+                       class="btn btn-outline-light"
+                       onclick="return confirm('Remover produto?')">
+                       Excluir
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>Nenhum produto cadastrado.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

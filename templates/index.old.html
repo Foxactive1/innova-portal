@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="min-h-screen flex items-center justify-center text-center bg-gradient-to-br from-black via-gray-900 to-gray-800">
+    <div class="max-w-3xl px-6">
+
+        <h1 class="text-4xl md:text-6xl font-bold mb-6">
+            <span id="typed"></span>
+        </h1>
+
+        <p class="text-gray-400 text-lg mb-8">
+            Automação, IA e sistemas escaláveis para crescimento real de negócio
+        </p>
+
+        <a href="#contact"
+           class="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl text-lg transition shadow-lg">
+           Fale Conosco
+        </a>
+    </div>
+</section>
+
+<!-- SERVIÇOS -->
+<section class="py-16">
+    <div class="max-w-6xl mx-auto px-6">
+        <h2 class="text-3xl font-bold text-center mb-10">Serviços</h2>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            {% for service in services %}
+            <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl hover:scale-105 transition shadow-lg">
+                <h5 class="text-xl font-semibold mb-2">{{ service.titulo }}</h5>
+                <p class="text-gray-400">{{ service.descricao }}</p>
+            </div>
+            {% else %}
+            <p class="text-center col-span-3">Nenhum serviço cadastrado.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- PRODUTOS -->
+<section class="py-16 bg-gray-900">
+    <div class="max-w-6xl mx-auto px-6">
+        <h2 class="text-3xl font-bold text-center mb-10">Produtos</h2>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            {% for product in products %}
+            <div class="bg-black border border-gray-800 p-6 rounded-2xl hover:scale-105 transition shadow-lg">
+                <h5 class="text-xl font-semibold">{{ product.nome }}</h5>
+                <p class="text-gray-400 my-2">{{ product.descricao }}</p>
+                <strong class="text-blue-500 text-lg">R$ {{ product.preco }}</strong>
+            </div>
+            {% else %}
+            <p class="text-center col-span-3">Nenhum produto cadastrado.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- CONTATO -->
+<section id="contact" class="py-16">
+    <div class="max-w-xl mx-auto px-6">
+        <h2 class="text-3xl font-bold text-center mb-8">Contato</h2>
+
+        <form action="/contact" method="POST" class="space-y-4">
+            <input type="text" name="nome" placeholder="Nome"
+                class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700">
+
+            <input type="email" name="email" placeholder="Email"
+                class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700">
+
+            <textarea name="mensagem" placeholder="Mensagem"
+                class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700"></textarea>
+
+            <button class="w-full bg-blue-600 hover:bg-blue-500 p-3 rounded-lg">
+                Enviar
+            </button>
+        </form>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="text-center py-6 border-t border-gray-800">
+    <p class="text-gray-500">© 2026 InNovaIdeia</p>
+</footer>
+
+<!-- Typed.js -->
+<script src="https://unpkg.com/typed.js@2.1.0/dist/typed.umd.js"></script>
+<script>
+new Typed("#typed", {
+    strings: [
+        "Transformamos ideias em soluções digitais",
+        "IA aplicada ao crescimento do seu negócio",
+        "Automação que gera resultado"
+    ],
+    typeSpeed: 40,
+    backSpeed: 20,
+    loop: true
+});
+</script>
+
+{% endblock %}

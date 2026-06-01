@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="main-ultra.css" />
+    <title>InNovaIdeia Design System - Referência de Componentes</title>
+    <style>
+        .component-section {
+            scroll-margin-top: 80px;
+        }
+
+        .example-grid {
+            gap: 1.5rem;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .code-preview {
+            background: var(--color-surface-dark);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .code-header {
+            background: var(--color-primary-faint);
+            border-bottom: 1px solid var(--color-border);
+            padding: var(--space-md);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-primary-light);
+            font-size: var(--text-sm);
+            font-family: var(--font-mono);
+        }
+
+        .code-content {
+            padding: var(--space-lg);
+            font-family: var(--font-mono);
+            font-size: var(--text-xs);
+            overflow-x: auto;
+            color: var(--color-secondary-light);
+        }
+
+        .nav-sticky {
+            position: sticky;
+            top: 0;
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+            padding: 1rem 0;
+            z-index: var(--z-sticky);
+            margin-bottom: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .nav-links a {
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            white-space: nowrap;
+            transition: var(--transition-fast);
+        }
+
+        .nav-links a:hover {
+            background: var(--color-primary-faint);
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .demo-box {
+            padding: 1rem;
+            background: var(--color-surface-light);
+            border: 1px dashed var(--color-border-light);
+            border-radius: var(--radius-md);
+            text-align: center;
+            font-size: var(--text-sm);
+            color: var(--color-text-muted);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Sticky -->
+    <div class="nav-sticky">
+        <div class="container">
+            <h2 class="m-0 mb-md">🎨 Design System Components</h2>
+            <div class="nav-links">
+                <a href="#buttons">Buttons</a>
+                <a href="#forms">Forms</a>
+                <a href="#cards">Cards</a>
+                <a href="#badges">Badges</a>
+                <a href="#alerts">Alerts</a>
+                <a href="#tables">Tables</a>
+                <a href="#progress">Progress</a>
+                <a href="#typography">Typography</a>
+                <a href="#utilities">Utilities</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mb-xl">
+        <!-- Header -->
+        <section class="mb-xl">
+            <div class="flex-between mb-lg">
+                <div>
+                    <h1 class="mb-sm">InNovaIdeia Design System</h1>
+                    <p class="subtitle">v2.0 ULTRA • Production-Ready • 45+ Components</p>
+                </div>
+                <button class="btn btn-ghost" onclick="toggleTheme()">🌙 Theme</button>
+            </div>
+
+            <div class="alert alert-info">
+                <span>ℹ️</span>
+                <div class="alert-content">
+                    <p>Explore todos os componentes disponíveis. Copie o código HTML para usar em seu projeto.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: Buttons -->
+        <section id="buttons" class="component-section mb-xl">
+            <h2>🔘 Buttons</h2>
+
+            <h3 class="mt-lg">Variantes de Cor</h3>
+            <div class="demo-grid">
+                <button class="btn btn-primary">Primary</button>
+                <button class="btn btn-secondary">Secondary</button>
+                <button class="btn btn-outline">Outline</button>
+                <button class="btn btn-danger">Danger</button>
+                <button class="btn btn-warning">Warning</button>
+                <button class="btn btn-success">Success</button>
+                <button class="btn btn-ghost">Ghost</button>
+                <button class="btn btn-primary" disabled>Disabled</button>
+            </div>
+
+            <h3 class="mt-lg">Tamanhos</h3>
+            <div class="demo-grid" style="align-items: center;">
+                <button class="btn btn-primary btn-sm">Small</button>
+                <button class="btn btn-primary">Default</button>
+                <button class="btn btn-primary btn-lg">Large</button>
+                <button class="btn btn-icon btn-primary">🚀</button>
+            </div>
+
+            <h3 class="mt-lg">Com Ícones</h3>
+            <div class="demo-grid">
+                <button class="btn btn-primary">
+                    ✓ Salvar
+                </button>
+                <button class="btn btn-secondary">
+                    ↓ Download
+                </button>
+                <button class="btn btn-outline">
+                    🔍 Buscar
+                </button>
+            </div>
+
+            <div class="code-preview">
+                <div class="code-header">HTML</div>
+                <div class="code-content">&lt;button class="btn btn-primary"&gt;Primary&lt;/button&gt;
+&lt;button class="btn btn-primary btn-sm"&gt;Small&lt;/button&gt;
+&lt;button class="btn btn-primary btn-lg"&gt;Large&lt;/button&gt;
+&lt;button class="btn btn-primary btn-block"&gt;Full Width&lt;/button&gt;
+&lt;button class="btn btn-primary" disabled&gt;Disabled&lt;/button&gt;</div>
+            </div>
+        </section>
+
+        <!-- SECTION: Forms -->
+        <section id="forms" class="component-section mb-xl">
+            <h2>📝 Forms</h2>
+
+            <div class="card">
+                <form>
+                    <div class="grid-2 gap-lg">
+                        <div class="form-group">
+                            <label class="form-label">
+                                Nome Completo
+                                <span class="required">*</span>
+                            </label>
+                            <input type="text" class="form-control" placeholder="João Silva" />
+                            <small class="form-help">Use seu nome legal</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                Email
+                                <span class="required">*</span>
+                            </label>
+                            <input type="email" class="form-control" placeholder="seu@email.com" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Mensagem</label>
+                        <textarea class="form-textarea" placeholder="Escreva sua mensagem..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Categoria</label>
+                        <select class="form-select">
+                            <option>Selecione uma opção</option>
+                            <option>Feedback</option>
+                            <option>Bug Report</option>
+                            <option>Feature Request</option>
+                        </select>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="checkbox" id="terms" />
+                        <label for="terms">Concordo com os termos de serviço</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="radio" id="opt1" name="option" />
+                        <label for="opt1">Opção 1</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="radio" id="opt2" name="option" />
+                        <label for="opt2">Opção 2</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg mt-lg">
+                        Enviar Formulário
+                    </button>
+                </form>
+            </div>
+
+            <div class="code-preview">
+                <div class="code-header">HTML</div>
+                <div class="code-content">&lt;div class="form-group"&gt;
+    &lt;label class="form-label"&gt;Email&lt;/label&gt;
+    &lt;input type="email" class="form-control" /&gt;
+    &lt;small class="form-help"&gt;Digite um email válido&lt;/small&gt;
+&lt;/div&gt;
+
+&lt;div class="form-check"&gt;
+    &lt;input type="checkbox" id="check" /&gt;
+    &lt;label for="check"&gt;Concordo&lt;/label&gt;
+&lt;/div&gt;</div>
+            </div>
+        </section>
+
+        <!-- SECTION: Cards -->
+        <section id="cards" class="component-section mb-xl">
+            <h2>💳 Cards</h2>
+
+            <div class="grid-3 gap-lg">
+                <div class="card">
+                    <h3>Padrão</h3>
+                    <p class="text-muted">Card com border suave e hover effect</p>
+                </div>
+
+                <div class="card bordered">
+                    <h3>Com Borda</h3>
+                    <p class="text-muted">Card destacado com borda primária</p>
+                </div>
+
+                <div class="card elevated">
+                    <h3>Elevado</h3>
+                    <p class="text-muted">Card com sombra mais forte</p>
+                </div>
+
+                <div class="card compact">
+                    <h3>Compacto</h3>
+                    <p class="text-muted">Menos padding</p>
+                </div>
+
+                <div class="card" style="position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(91,124,250,0.1), rgba(21,184,166,0.1));">
+                    <h3>Com Gradient</h3>
+                    <p class="text-muted">Background gradiente</p>
+                </div>
+
+                <div class="card" style="border: 2px dashed var(--color-secondary);">
+                    <h3>Custom Style</h3>
+                    <p class="text-muted">Totalmente customizável</p>
+                </div>
+            </div>
+
+            <div class="code-preview">
+                <div class="code-header">HTML</div>
+                <div class="code-content">&lt;div class="card"&gt;
+    &lt;h3&gt;Título&lt;/h3&gt;
+    &lt;p&gt;Conteúdo&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div class="card bordered"&gt;Destaque&lt;/div&gt;
+&lt;div class="card elevated"&gt;Premium&lt;/div&gt;
+&lt;div class="card compact"&gt;Mini&lt;/div&gt;</div>
+            </div>
+        </section>
+
+        <!-- SECTION: Badges -->
+        <section id="badges" class="component-section mb-xl">
+            <h2>🏷️ Badges & Tags</h2>
+
+            <h3 class="mt-lg">Variantes</h3>
+            <div class="demo-grid">
+                <div><span class="badge badge-primary">Primary</span></div>
+                <div><span class="badge badge-secondary">Secondary</span></div>
+                <div><span class="badge badge-success">Success</span></div>
+                <div><span class="badge badge-danger">Danger</span></div>
+                <div><span class="badge badge-warning">Warning</span></div>
+            </div>
+
+            <h3 class="mt-lg">Com Ícones</h3>
+            <div class="demo-grid">
+                <div><span class="badge badge-success">✓ Completo</span></div>
+                <div><span class="badge badge-warning">⚠ Atenção</span></div>
+                <div><span class="badge badge-danger">✕ Erro</span></div>
+                <div><span class="badge badge-primary">ℹ Info</span></div>
+            </div>
+
+            <div class="code-preview">
+                <div class="code-header">HTML</div>
+                <div class="code-content">&lt;span class="badge badge-primary"&gt;Primary&lt;/span&gt;
+&lt;span class="badge badge-success"&gt;✓ Completo&lt;/span&gt;
+&lt;span class="badge badge-danger"&gt;✕ Erro&lt;/span&gt;</div>
+            </div>
+        </section>
+
+        <!-- SECTION: Alerts -->
+        <section id="alerts" class="component-section mb-xl">
+            <h2>⚠️ Alerts & Notifications</h2>
+
+            <div class="alert alert-primary mb-lg">
+                <span>ℹ️</span>
+                <div class="alert-content">
+                    <h4>Informação</h4>
+                    <p>Mensagem informativa para o usuário.</p>
+                </div>
+            </div>
+
+            <div class="alert alert-success mb-lg">
+                <span>✓</span>
+                <div class="alert-content">
+                    <h4>Sucesso!</h4>
+                    <p>Sua ação foi completada com êxito.</p>
+                </div>
+            </div>
+
+            <div class="alert alert-warning mb-lg">
+                <span>⚠</span>
+                <div class="alert-content">
+                    <h4>Aviso</h4>
+                    <p>Verifique este ponto antes de continuar.</p>
+                </div>
+            </div>
+
+            <div class="alert alert-danger mb-lg">
+                <span>✕</span>
+                <div class="alert-content">
+                    <h4>Erro</h4>
+                    <p>Ocorreu um problema. Tente novamente.</p>
+                </div>
+            </div>
+
+            <div class="code-preview">
+                <div class="code-header">HTML</div>
+                <div class="code-content">&lt;div class="alert alert-success"&gt;
+    &lt;span&gt;✓&lt;/span&gt;
+    &lt;div class="alert-content"&gt;
+        &lt;h4&gt;Sucesso!&lt;/h4&gt;
+        &lt;p&gt;Mensagem de sucesso.&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</div>
+            </div>
+        </section>
+
+        <!-- SECTION: Tables -->
+        <section id="tables" class="component-section mb-xl">
+            <h2>📊 Tables</h2>
+
+            <div class="card">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Status</th>
+                            <th>Progresso</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>#001</td>
+                            <td>Design System</td>
+                            <td><span class="badge badge-success">✓ Completo</span></td>
+                            <td>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar" style="width: 100%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#002</td>
+                            <td>Documentação</td>
+                            <td><span class="badge badge-primary">Em progresso</span></td>
+                            <td>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar" style="width: 75%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#003</td>
+                            <td>Testes</td>
+                            <td><span class="badge badge-warning">Planejado</span></td>
+                            <td>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar" style="width: 25%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="code-preview">
+                <div class="code-header">HTML</div>
+                <div class="code-content">&lt;table class="table table-striped"&gt;
+    &lt;thead&gt;
+        &lt;tr&gt;
+            &lt;th&gt;Coluna 1&lt;/th&gt;
+            &lt;th&gt;Coluna 2&lt;/th&gt;
+        &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+        &lt;tr&gt;
+            &lt;td&gt;Dados&lt;/td&gt;
+            &lt;td&gt;Dados&lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/tbody&gt;
+&lt;/table&gt;</div>
+            </div>
+        </section>
+
+        <!-- SECTION: Progress -->
+        <section id="progress" class="component-section mb-xl">
+            <h2>📈 Progress & Loading</h2>
+
+            <h3 class="mt-lg">Progress Bars</h3>
+            <p class="text-muted">25% Complete</p>
+            <div class="progress mb-lg">
+                <div class="progress-bar" style="width: 25%"></div>
+            </div>
+
+            <p class="text-muted">50% Complete</p>
+            <div class="progress mb-lg">
+                <div class="progress-bar" style="width: 50%"></div>
+            </div>
+
+            <p class="text-muted">100% Complete</p>
+            <div class="progress mb-lg">
+                <div class="progress-bar" style="width: 100%"></div>
+            </div>
+
+            <p class="text-muted">Striped Animation</p>
+            <div class="progress mb-lg">
+                <div class="progress-bar striped" style="width: 75%"></div>
+            </div>
+
+            <h3 class="mt-lg">Loading States</h3>
+            <div class="demo-grid">
+                <div>
+                    <div class="skeleton" style="height: 60px; border-radius: var(--radius-lg);"></div>
+                </div>
+                <div class="flex-center">
+                    <div class="spinner" style="width: 40px; height: 40px;"></div>
+                </div>
+                <div style="padding: 1rem; text-align: center;">
+                    <div class="pulse" style="display: inline-block;">⏳ Carregando...</div>
+                </div>
+            </div>
+
+            <div class="code-preview">
+                <div class="code-header">HTML</div>
+                <div class="code-content">&lt;div class="progress"&gt;
+    &lt;div class="progress-bar" style="width: 75%"&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div class="progress"&gt;
+    &lt;div class="progress-bar striped" style="width: 50%"&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div class="spinner"&gt;&lt;/div&gt;
+&lt;div class="skeleton" style="height: 60px;"&gt;&lt;/div&gt;</div>
+            </div>
+        </section>
+
+        <!-- SECTION: Typography -->
+        <section id="typography" class="component-section mb-xl">
+            <h2>🔤 Typography</h2>
+
+            <h3>Headings</h3>
+            <h1 class="mt-lg">Heading 1 - 47px (text-4xl)</h1>
+            <h2 class="mt-lg">Heading 2 - 37.5px (text-3xl)</h2>
+            <h3 class="mt-lg">Heading 3 - 30px (text-2xl)</h3>
+            <h4 class="mt-lg">Heading 4 - 24px (text-xl)</h4>
+            <h5 class="mt-lg">Heading 5 - 18px (text-lg)</h5>
+            <h6 class="mt-lg">Heading 6 - 16px (text-base)</h6>
+
+            <h3 class="mt-xl">Font Sizes</h3>
+            <p class="text-xs text-muted">Extra Small - 12px (text-xs)</p>
+            <p class="text-sm text-muted">Small - 14px (text-sm)</p>
+            <p class="text-base">Base - 16px (text-base)</p>
+            <p class="text-lg">Large - 18px (text-lg)</p>
+            <p class="text-xl">Extra Large - 24px (text-xl)</p>
+
+            <h3 class="mt-xl">Font Weights</h3>
+            <p style="font-weight: var(--font-weight-light);">Light - 300</p>
+            <p style="font-weight: var(--font-weight-regular);">Regular - 400</p>
+            <p style="font-weight: var(--font-weight-semibold);">Semibold - 600</p>
+            <p class="text-bold">Bold - 700</p>
+
+            <h3 class="mt-xl">Code & Mono</h3>
+            <p>Use <span class="text-mono">var(--color-primary)</span> para cores primárias.</p>
+            <div class="code-block">function hello() {
+    console.log('Design System v2.0');
+}</div>
+
+            <div class="code-preview">
+                <div class="code-header">HTML</div>
+                <div class="code-content">&lt;h1&gt;Heading 1&lt;/h1&gt;
+&lt;p class="text-lg"&gt;Paragrafo grande&lt;/p&gt;
+&lt;span class="text-mono"&gt;Código&lt;/span&gt;
+&lt;div class="code-block"&gt;Bloco de código&lt;/div&gt;</div>
+            </div>
+        </section>
+
+        <!-- SECTION: Utilities -->
+        <section id="utilities" class="component-section mb-xl">
+            <h2>⚙️ Utility Classes</h2>
+
+            <h3 class="mt-lg">Flexbox</h3>
+            <div class="card">
+                <div class="flex-center" style="background: var(--color-primary-faint); padding: 2rem; border-radius: var(--radius-md);">
+                    Centered Content (flex-center)
+                </div>
+            </div>
+
+            <div class="card mt-lg">
+                <div class="flex-between" style="background: var(--color-primary-faint); padding: 2rem; border-radius: var(--radius-md);">
+                    <span>Left</span>
+                    <span>Right (flex-between)</span>
+                </div>
+            </div>
+
+            <h3 class="mt-lg">Spacing</h3>
+            <div class="card">
+                <p class="mt-lg">Margin Top Large</p>
+                <p class="mb-lg">Margin Bottom Large</p>
+                <p class="px-md">Padding Horizontal Medium</p>
+            </div>
+
+            <h3 class="mt-lg">Grid Layouts</h3>
+            <div class="grid-2 gap-lg mt-lg">
+                <div class="demo-box">Column 1</div>
+                <div class="demo-box">Column 2</div>
+                <div class="demo-box">Column 3</div>
+                <div class="demo-box">Column 4</div>
+            </div>
+
+            <h3 class="mt-lg">Text Utilities</h3>
+            <p class="text-bold">Bold Text</p>
+            <p class="text-muted">Muted Text</p>
+            <p class="text-soft">Soft Text</p>
+            <p class="text-center">Centered Text</p>
+
+            <div class="code-preview">
+                <div class="code-header">HTML - Utilities</div>
+                <div class="code-content">&lt;div class="flex-center"&gt;Centralizado&lt;/div&gt;
+&lt;div class="flex-between"&gt;&lt;span&gt;Left&lt;/span&gt;&lt;span&gt;Right&lt;/span&gt;&lt;/div&gt;
+&lt;p class="mt-lg mb-lg"&gt;Com margens&lt;/p&gt;
+&lt;div class="grid-3 gap-lg"&gt;...&lt;/div&gt;
+&lt;p class="text-bold text-center"&gt;Bold e Centralizado&lt;/p&gt;</div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="card mt-xl">
+            <div class="flex-between">
+                <div>
+                    <h3 class="m-0">🚀 InNovaIdeia Design System</h3>
+                    <p class="text-muted mb-0">v2.0 ULTRA | Production Ready</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-muted mb-sm">by Dione Castro Alves</p>
+                    <a href="https://github.com/Foxactive1" class="btn btn-sm btn-ghost">GitHub</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Toggle Theme
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        }
+
+        // Detect System Preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const saved = localStorage.getItem('theme');
+        const theme = saved || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+
+        // Smooth Scroll for Navigation
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(link.getAttribute('href'));
+                target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    </script>
+</body>
+</html>
